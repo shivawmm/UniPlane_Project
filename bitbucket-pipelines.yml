@@ -1,0 +1,47 @@
+
+image: atlassian/default-image:2
+
+pipelines:
+  branches:
+    main:
+#      - step:
+#          name: Installing
+#          caches:
+#            - node
+#          script:
+#            - echo "Cleaning modules and installing npm ... "
+#            - rm -rf package-lock.json
+#            - rm -rf node_modules
+#            - npm install
+#      - step:
+#          name: Build
+#          script:
+#            - echo "Building artifacts ... "
+#            - REACT_APP_ENVIRONMENT=staging
+#            - npm run build
+#          artifacts:
+#            - build/**
+      - step:
+          name: Generate deployment package
+          script:
+            - echo "Generate zip ... "
+            - rm -rf node_modules
+            - zip -r uniplane-fe.zip * -x "**.git**"
+          artifacts:
+            - uniplane-fe.zip
+      - step:
+          name: Deploy to Staging
+          deployment: Staging
+          script:
+            - echo "Running Deployment .. "
+            - pipe: atlassian/aws-elasticbeanstalk-deploy:1.4.1
+              variables:
+                AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+                AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+                AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+                APPLICATION_NAME: 'uniplane-fe'
+                ENVIRONMENT_NAME: 'Uniplane-fe-env'
+                S3_BUCKET: 'elasticbeanstalk-ap-south-1-339712741766'
+                ZIP_FILE: 'uniplane-fe.zip'
+                WAIT: 'true'
+#                DEBUG: 'true'
